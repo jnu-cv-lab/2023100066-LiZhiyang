@@ -15,7 +15,7 @@ img_bytes = np.fromfile(img_path, dtype=np.uint8)
 img = cv2.imdecode(img_bytes, cv2.IMREAD_COLOR)
 # 检查图片是否解码成功
 if img is None:
-    print("图片读取失败！可能是文件格式不支持")
+    print("图片读取失败！")
     exit()
 print(" 图片读取成功！")
 
@@ -42,7 +42,7 @@ cv2.destroyAllWindows()
 # 转换为灰度图
 gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 # 显示灰度图
-cv2.imshow("Grayscale Image", gray_img)
+cv2.imshow("Gray Image", gray_img)
 cv2.waitKey(0)
 # 关闭所有窗口
 cv2.destroyAllWindows()
@@ -60,31 +60,31 @@ print(f"\n灰度图已保存至: {save_path}")
 pixel = img[502, 205] if channels == 3 else gray_img[100, 100]
 print(f"\n坐标 (502,205) 的像素值: {pixel}")
 
-CROP_WIDTH = 400   # 裁剪宽度
-CROP_HEIGHT = 400  # 裁剪高度
+CUT_WIDTH = 400   # 裁剪宽度
+CUT_HEIGHT = 400  # 裁剪高度
 # 检查裁剪尺寸是否超出原图范围
-if CROP_WIDTH > width or CROP_HEIGHT > height:
+if CUT_WIDTH > width or CUT_HEIGHT > height:
     print(f"\n裁剪尺寸超出原图范围!")
     # 若超出范围，将裁剪尺寸调整为原图尺寸
-    CROP_WIDTH = width
-    CROP_HEIGHT = height
+    CUT_WIDTH = width
+    CUT_HEIGHT = height
 
 # 裁剪左上角区域
-cropped_img = img[0:CROP_HEIGHT, 0:CROP_WIDTH]
+cut_img = img[0:CUT_HEIGHT, 0:CUT_WIDTH]
 
 # 显示裁剪结果
-print(f"裁剪区域：左上角({CROP_WIDTH}, {CROP_HEIGHT})")
+print(f"裁剪区域：左上角({CUT_WIDTH}, {CUT_HEIGHT})")
 # 输出裁剪后图像的宽高
-print(f"裁剪后尺寸：宽{cropped_img.shape[1]} × 高{cropped_img.shape[0]}")
+print(f"裁剪后尺寸：宽{cut_img.shape[1]} × 高{cut_img.shape[0]}")
 # 创建窗口显示裁剪后的图像
-cv2.imshow(f"Cropped Image (Top-left {CROP_WIDTH}x{CROP_HEIGHT})", cropped_img)
+cv2.imshow(f"Cut Image (Top-left {CUT_WIDTH}x{CUT_HEIGHT})", cut_img)
 cv2.waitKey(0)
 # 关闭所有窗口
 cv2.destroyAllWindows()
 # 裁剪图保存路径
-crop_save_path = r"/home/lzy/.venv/bin/cut.png"
+cut_save_path = r"/home/lzy/.venv/bin/cut.png"
 # 编码裁剪图为PNG格式字节流
-_, crop_encoded = cv2.imencode(".png", cropped_img)
+_, cut_encoded = cv2.imencode(".png", cut_img)
 # 将编码后的字节流写入文件
-crop_encoded.tofile(crop_save_path)
-print(f"裁剪区域已保存至: {crop_save_path}")
+cut_encoded.tofile(cut_save_path)
+print(f"裁剪区域已保存至: {cut_save_path}")
