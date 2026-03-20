@@ -26,7 +26,7 @@ height, width = img.shape[:2]
 channels = img.shape[2] if len(img.shape) == 3 else 1
 # 获取图像像素数据类型
 dtype = img.dtype
-print("\n===== 图像基本信息 =====")
+print("\n图像基本信息")
 print(f"图像尺寸（宽×高）: {width} × {height}")
 print(f"图像通道数: {channels}")
 print(f"像素数据类型: {dtype}")
