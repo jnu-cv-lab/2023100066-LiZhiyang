@@ -44,7 +44,7 @@ img_encoded.tofile(save_path)
 ```
 ### 4.5 图像裁剪
 ```python
-cropped_img = img[0:CROP_HEIGHT, 0:CROP_WIDTH]
+cut_img = img[0:CUT_HEIGHT, 0:CUT_WIDTH]
 ```
 ## 5. 使用说明
 1. 可修改 img_path 为自己的图片路径
