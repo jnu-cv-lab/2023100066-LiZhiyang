@@ -8,6 +8,16 @@
 - Vscode/c++
 - Linux/wsl
 
+```Linux
+//检查是否有编译器与调试器
+g++ --version
+gdb --version
+//若没有编译器或调试器，则需要安装，利用sudo指令
+//进入cv-course目录
+cd cv-course
+//创建新文件夹，并将可执行文件放入build中
+mdkir build
+ ```
 ## 3. 主要功能
 
 1. 读取本地图片并判断文件是否存在
