@@ -1,6 +1,7 @@
 # 2023100066-3
 2023100066自动化李智阳+实验作业4
 # 图像下采样与抗混叠实验
+# 概述：基础下采样对比：验证直接下采样与高斯滤波下采样的混叠差异，通过 FFT 频谱分析混叠原理；自适应下采样实现：基于梯度分析实现内容感知的差异化缩放，对比全局统一下采样的效果优势
 
 ## 1. 项目目的
 1. 掌握图像下采样中高频信号折叠产生混叠的物理本质，理解抗混叠滤波的必要性
@@ -28,66 +29,77 @@ pip install opencv-python numpy matplotlib
 
 ## 4. 核心代码与说明
 
-### 4.1 下采样
+### 4.1 下采样与高斯滤波
 ```python
-# 方案1：无滤波直接下采样
-img_down_no_filter = cv2.resize(img_original, (new_w, new_h), interpolation=cv2.INTER_NEAREST)
-# 方案2：先高斯滤波再下采样
-img_blur = cv2.GaussianBlur(img_original, (5, 5), sigmaX=1.5)  # 高斯平滑
-img_down_with_filter = cv2.resize(img_blur, (new_w, new_h), interpolation=cv2.INTER_NEAREST)
+# 直接下采样
+def downsample(img, M):
+    return img[::M, ::M]
+# 高斯滤波 + 下采样（抗混叠）
+def gaussian_downsample(img, M, sigma):
+    blurred = cv2.GaussianBlur(img, (5, 5), sigma)
+    return downsample(blurred, M)
 ```
 
-### 4.2 图像恢复（三种插值方法）
+### 4.2 FFT 频谱分析
 ```python
-# 无预滤波的恢复（基于 img_down_no_filter 放大到原尺寸）
-img_up_nn_no_filter = cv2.resize(img_down_no_filter, (w, h), interpolation=cv2.INTER_NEAREST)  # 最近邻
-img_up_bilinear_no_filter = cv2.resize(img_down_no_filter, (w, h), interpolation=cv2.INTER_LINEAR)  # 双线性
-img_up_bicubic_no_filter = cv2.resize(img_down_no_filter, (w, h), interpolation=cv2.INTER_CUBIC)  # 双三次
-# 有预滤波的恢复（基于 img_down_with_filter 放大到原尺寸）
-img_up_nn_with_filter = cv2.resize(img_down_with_filter, (w, h), interpolation=cv2.INTER_NEAREST)
-img_up_bilinear_with_filter = cv2.resize(img_down_with_filter, (w, h), interpolation=cv2.INTER_LINEAR)
-img_up_bicubic_with_filter = cv2.resize(img_down_with_filter, (w, h), interpolation=cv2.INTER_CUBIC)
+def get_fft_spectrum(img):
+    f = np.fft.fft2(img)          # 傅里叶变换
+    f_shift = np.fft.fftshift(f) # 低频移到中心
+    magnitude = 20 * np.log(np.abs(f_shift) + 1)
+    return magnitude
 ```
 
-### 4.3 计算MSE和PSNR
+### 4.3 自适应下采样核心
 ```python
-def calculate_mse_psnr(original, restored):​
-    original = original.astype(np.float64)​
-    restored = restored.astype(np.float64)​
-    mse = np.mean((original - restored) ** 2)​
-    psnr = 100.0 if mse == 0 else 20 * np.log10(255.0 / np.sqrt(mse))​
-    return mse, psnr
+#  计算梯度
+def compute_gradient(img):
+    sobel_x = cv2.Sobel(img, cv2.CV_64F, 1, 0)
+    sobel_y = cv2.Sobel(img, cv2.CV_64F, 0, 1)
+    grad_mag = np.sqrt(sobel_x**2 + sobel_y**2)
+    return grad_mag
+#  由梯度生成局部 M 和 σ
+def generate_local_M_sigma(grad_mag, M_min=2, M_max=4):
+    local_M = M_max - (M_max - M_min) * grad_mag
+    local_sigma = 0.45 * local_M
+    return local_M, local_sigma
 ```
 
-### 4.4 FFT 频谱分析（频域可视化）
+### 4.4 自适应高斯滤波
 ```python
-def fft_analysis(img):​
-    img_float = np.float32(img)​
-    dft = cv2.dft(img_float, flags=cv2.DFT_COMPLEX_OUTPUT)  # 离散傅里叶变换​
-    dft_shift = np.fft.fftshift(dft)  # 频谱中心化
-    magnitude = 20 * np.log(cv2.magnitude(dft_shift[:,:,0], dft_shift[:,:,1]) + 1e-8)  # 对数缩放
-    magnitude_norm = cv2.normalize(magnitude, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)  # 归一化到 0-255​
-    return magnitude_norm
+def adaptive_gaussian_blur(img, local_sigma):
+    h, w = img.shape
+    blurred = np.zeros_like(img, dtype=np.float32)
+    block = 4
+    for i in range(0, h, block):
+        for j in range(0, w, block):
+            sg = local_sigma[i:i+block, j:j+block].mean()
+            ksize = (2*int(4*sg)+1, 2*int(4*sg)+1)
+            blurred[i:i+block, j:j+block] = cv2.GaussianBlur(
+                img[i:i+block, j:j+block], ksize, sg
+            )
+    return blurred.astype(np.uint8)
 ```
-### 4.5 DCT 变换分析（能量分布）
+### 4.5 自适应下采样
 ```python
-def dct_analysis(img):​
-    img_float = np.float32(img)​
-    dct = cv2.dct(img_float)  # 离散余弦变换​
-    dct_log = np.log(np.abs(dct) + 1e-8)  # 对数缩放​
-    dct_norm = cv2.normalize(dct_log, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)​
-    return dct_norm
+def adaptive_downsample(img, local_M):
+    h, w = img.shape
+    new_h, new_w = h // 4, w // 4
+    out = np.zeros((new_h, new_w), dtype=np.uint8)
+    for i in range(new_h):
+        for j in range(new_w):
+            y = i*4
+            x = j*4
+            M = int(round(local_M[y:y+4, x:x+4].mean()))
+            out[i,j] = img[y:y+4, x:x+4][::M, ::M].mean()
+    return out
 ```
-### 4.6 计算 DCT 低频能量占比
+### 4.6 图像质量评价指标
 ```python
-def calculate_dct_energy_ratio(img):​
-    img_float = np.float32(img)​
-    dct = cv2.dct(img_float)​
-    h, w = dct.shape​
-    roi_h, roi_w = h // 2, w // 2  # 取左上角 1/4 区域
-    roi_energy = np.sum(dct[:roi_h, :roi_w] ** 2)  # 低频能量​
-    total_energy = np.sum(dct ** 2)  # 总能量​
-    return roi_energy / total_energy if total_energy != 0 else 0.0
+def compute_metrics(original, upsampled):
+    mse = np.mean((original - upsampled)**2)
+    psnr = 20 * np.log10(255 / np.sqrt(mse))
+    ssim = compute_ssim(original, upsampled)
+    return mse, psnr, ssim
 ```
 
 ## 5. 核心参数说明
@@ -97,12 +109,13 @@ def calculate_dct_energy_ratio(img):​
 4. 评价指标：​MSE（均方误差）越小表示恢复图与原图差异越小；​PSNR（峰值信噪比）越大表示恢复质量越好；​DCT能量占比，左上角低频区域能量 / 总能量，反映了图像平滑度
 
 ## 6. 运行步骤
-1. 将条纹.png 放入 cv-course/build/目录
-2. 将核心代码保存为 homework4.py 放入同一目录
-3. 在Ubuntu中输入Linux指令 source /home/lzy/cv-course/.venv-basic/bin/activate激活开发环境
-4. 在build目录下输入Linux指令 python3 homework4.py运行脚本
-5. 查看输出：​控制台：打印各步骤状态、MSE/PSNR 数值、DCT 能量占比​；目录下：生成所有任务对应的结果图。
+1. 在ubuntu中打开cv-course/build/目录
+2. 在Ubuntu中输入touch homework4.py和touch homework4_adapt.py分别创建两个Python文件
+3. 在VScode中编写Python代码
+4. 在Ubuntu中输入Linux指令 source /home/lzy/cv-course/.venv-basic/bin/activate激活开发环境
+5. 在build目录下输入Linux指令 python3 homework4.py运行脚本
+6. 查看输出
 
 ## 7. 作者信息
 1. 作者：李智阳
-2. 日期：2026年4月7日
+2. 日期：2026年4月10日
