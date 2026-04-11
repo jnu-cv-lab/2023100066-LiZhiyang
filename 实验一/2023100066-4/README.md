@@ -24,7 +24,7 @@ pip install opencv-python numpy matplotlib
 2. 实现直接下采样和高斯滤波后下采样两种方式，对比抗混叠效果。
 3. 对原图、直接下采样图、高斯下采样图分别计算并显示傅里叶频谱，直观展示混叠与抗混叠差异。
 4. 基于图像梯度幅值自动分配局部下采样倍数 M 和高斯滤波 σ：
-5. 对比自适应下采样与全局统一下采样的结果，绘制误差热力图，并计算 MSE、PSNR、SSIM 等评价指标。
+5. 对比自适应下采样与全局统一下采样的结果，绘制误差热力图。
 
 ## 4. 核心代码与说明
 
@@ -92,21 +92,12 @@ def adaptive_downsample(img, local_M):
             out[i,j] = img[y:y+4, x:x+4][::M, ::M].mean()
     return out
 ```
-### 4.6 图像质量评价指标
-```python
-def compute_metrics(original, upsampled):
-    mse = np.mean((original - upsampled)**2)
-    psnr = 20 * np.log10(255 / np.sqrt(mse))
-    ssim = compute_ssim(original, upsampled)
-    return mse, psnr, ssim
-```
 
 ## 5. 核心参数说明
 1. 全局下采样：M=4，宽、高均缩小为原图的 1/4，面积为原图的 1/16
 2. 标准差 σ：遵循经验公式 σ≈0.45×M
 3. 梯度算子：Sobel 算子，计算图像 x、y 方向梯度，生成梯度幅值图，用于区分细节区与平坦区
 4. 梯度归一化：将梯度幅值归一化到 [0,1] 区间，实现梯度到局部 M 的线性映射：M=Mmax​−(Mmax​−Mmin​)×grad
-5. 图像质量评价指标：MSE（均方误差）、PSNR（峰值信噪比）、SSIM（结构相似性）
 
 ## 6. 运行步骤
 1. 在ubuntu中打开cv-course/build/目录
