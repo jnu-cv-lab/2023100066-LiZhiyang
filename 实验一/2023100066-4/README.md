@@ -110,3 +110,4 @@ def adaptive_downsample(img, local_M):
 ## 7. 作者信息
 1. 作者：李智阳
 2. 日期：2026年4月10日
+3. 注：结果分析在实验报告中
