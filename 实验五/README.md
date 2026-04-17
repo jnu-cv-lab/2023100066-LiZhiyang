@@ -106,10 +106,11 @@ def correct_perspective(image, corners):
 ## 6. 运行步骤
 1. 将测试图、畸变图放入实验目录。
 2. 创建Python文件：touch homework5.py和touch jiaozheng.py。
-3. 激活虚拟环境：source /home/lzy/cv-course/.venv-basic/bin/activate。
-4. 运行基础几何变换：python3 homework5.py。
-5. 运行文档透视校正：python3 jiaozheng.py。
-6. 查看输出
+3. 在word中设计一张测试图，并且截图保存至当前目录；在一张方格纸上写下一段文字，拍照并保存到当前目录。
+4. 激活虚拟环境：source /home/lzy/cv-course/.venv-basic/bin/activate。
+5. 运行基础几何变换：python3 homework5.py。
+6. 运行文档透视校正：python3 jiaozheng.py。
+7. 查看输出
 
 ## 7. 结果与分析
 1. 相似变换：图像旋转缩小，形状、角度无畸变。
