@@ -7,7 +7,7 @@ warnings.filterwarnings('ignore')
 plt.rcParams['font.family'] = ['DejaVu Sans']
 plt.rcParams['axes.unicode_minus'] = False
 
-# ====================== 1. 正弦位置编码 Sinusoidal PE ======================
+# ====================== 正弦位置编码 Sinusoidal PE ======================
 # 生成绝对位置编码，用于Transformer加法式位置嵌入
 def sinusoidal_position_encoding(seq_len, d_model):
     pe = np.zeros((seq_len, d_model))
@@ -38,7 +38,7 @@ plt.tight_layout()
 plt.savefig("1_sinusoidal_pe.png", dpi=150)
 plt.show()
 
-# ====================== 2. 二维向量旋转 2D Rotation ======================
+# ======================  二维向量旋转 2D Rotation ======================
 # RoPE 的基础几何操作，旋转不改变模长，只改变方向
 def rotate_2d(x, y, theta):
     c, s = np.cos(theta), np.sin(theta)
@@ -60,7 +60,7 @@ plt.legend()
 plt.savefig("2_2d_rotation.png", dpi=150)
 plt.show()
 
-# ====================== 3. 高维 RoPE 实现 ======================
+# ======================  高维 RoPE 实现 ======================
 # 对高维向量分组旋转，实现相对位置编码
 # 将 d_model 维向量两两分组，用复数乘法实现旋转
 def rope_forward(x, seq_len, d_model):
@@ -76,7 +76,7 @@ def rope_forward(x, seq_len, d_model):
     
     # 转回实数向量并返回
     return np.stack([x_rot.real, x_rot.imag], axis=-1).reshape(seq_len, d_model)
-# ====================== 5. RoPE 相对位置不变性验证 ======================
+# ====================== RoPE 相对位置不变性验证 ======================
 # 相同相对距离的 token，注意力分数几乎相同
 seq_len, d_model = 20, 16
 np.random.seed(42)
