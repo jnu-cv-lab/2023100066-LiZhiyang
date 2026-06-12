@@ -1,0 +1,10 @@
+{
+  "data_root": "archive",
+  "target_frames": 30,
+  "input_dim": 132,
+  "num_classes": 6,
+  "num_total": 836,
+  "num_train": 668,
+  "num_test": 168,
+  "failed_videos": []
+}
